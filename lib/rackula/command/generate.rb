@@ -39,6 +39,9 @@ module Rackula
 				option '-p/--public <path>', "The public path to copy initial files from", default: 'public'
 				option '-o/--output-path <path>', "The output path to save static site", default: 'static'
 				
+				option '-a/--no-adjust-extension', "Suppresses adding a .html extension to pages", default: false
+				option '-n/--no-convert-links', "Suppresses updating local links", default: false
+				
 				option '-f/--force', "If the output path exists, delete it.", default: false
 				
 				option '--concurrency', "The concurrency of the server container", default: 4
@@ -66,8 +69,18 @@ module Rackula
 					FileUtils.cp_r(path, File.join(output_path, "."))
 				end
 				
+				wget_arguments = ["--mirror", "--recursive", "--continue", "--no-host-directories", "--directory-prefix", output_path.to_s]
+				
+				if !@options[:no_adjust_extension]
+					wget_arguments << "--adjust-extension"
+				end
+				
+				if !@options[:no_convert_links]
+					wget_arguments << "--convert_links"
+				end
+				
 				# Generate HTML pages:
-				system!("wget", "--mirror", "--recursive", "--continue", "--convert-links", "--adjust-extension", "--no-host-directories", "--directory-prefix", output_path.to_s, "http://localhost:#{port}")
+                                system!("wget", *wget_arguments, "http://localhost:#{port}")				
 			end
 			
 			def serve(endpoint, root)
